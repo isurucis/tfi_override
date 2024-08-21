@@ -780,4 +780,29 @@ class Cart extends CartCore
         }
         return true;
     }
+    
+    public function getPackageShippingCost($id_carrier = null, $use_tax = true, ?Country $default_country = null, $product_list = null, $id_zone = null, $keepOrderPrices = false)
+    {
+        if ($id_carrier === 8) {//FedEx Standard Overnight
+            $total_shipping_cost = 20;
+
+            /*$products = $this->getProducts();
+            *foreach ($products as $product) {
+            *    $product_features = Product::getFeaturesStatic($product['id_product']);
+            *
+            *    foreach ($product_features as $feature) {
+            *        if ($feature['id_feature'] == 4) { // Replace 4 with your actual feature ID
+            *            
+            *            $feature_value = FeatureValue::getFeatureValueLang($feature['id_feature_value'], Context::getContext()->language->id);
+            *            $total_shipping_cost += (float)$feature_value[0]['value'] * $product['cart_quantity'];
+            *            break;
+            *        }
+            *    }
+            }*/
+
+            return $total_shipping_cost;
+        } else {
+            return parent::getPackageShippingCost($id_carrier, $use_tax, $default_country, $product_list, $id_zone, $keepOrderPrices);
+        }
+    }
 }
