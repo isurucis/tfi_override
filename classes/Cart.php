@@ -485,7 +485,7 @@ class Cart extends CartCore
 
             $boxingDetails = $this->getBoxingDetails($items);
             $totalWeight = 0;
-            foreach ($response[0]['lineItems'] as $item) {
+            foreach ($boxingDetails[0]['lineItems'] as $item) {
                 $totalWeight += $item['Weight'];
             }
             $total_shipping_cost =$totalWeight*0.2;
