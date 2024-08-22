@@ -477,7 +477,8 @@ class Cart extends CartCore
         bool $keepOrderPrices = false
     ) {
         if ($id_carrier === 8) {//FedEx Standard Overnight
-            $total_shipping_cost = 20;
+            $total_shipping_cost = $this->getFedExShippingCost();
+
             return $total_shipping_cost;
         } else {
             if ($this->isVirtualCart()) {
@@ -786,6 +787,99 @@ class Cart extends CartCore
         }
         return true;
     }
-    
+
+    private function getFedExShippingCost()
+    {
+
+        // Set up FedEx API credentials
+        $api_key = 'PbHxzpmMPlKBYdJs';
+        $api_password = 'yGtrfupfDmCipEmODFa44644c';
+        $account_number = '707910399';
+        $meter_number = '259195573';
+
+        // Create the SOAP client
+        $client = new SoapClient('path_to_wsdl_file', array('trace' => 1));
+
+        // Set up the request data
+        $request = array(
+            'WebAuthenticationDetail' => array(
+                'UserCredential' => array(
+                    'Key' => $api_key,
+                    'Password' => $api_password
+                )
+            ),
+            'ClientDetail' => array(
+                'AccountNumber' => $account_number,
+                'MeterNumber' => $meter_number
+            ),
+            'TransactionDetail' => array(
+                'CustomerTransactionId' => ' *** Rate Request using PHP ***'
+            ),
+            'Version' => array(
+                'ServiceId' => 'crs',
+                'Major' => '26',
+                'Intermediate' => '0',
+                'Minor' => '0'
+            ),
+            'RequestedShipment' => array(
+                'DropoffType' => 'REGULAR_PICKUP',
+                'ServiceType' => 'FEDEX_GROUND', // Example: Change as needed
+                'PackagingType' => 'YOUR_PACKAGING',
+                'Shipper' => array(
+                    'Address' => array(
+                        'StreetLines' => array('Shipper Address Line 1'),
+                        'City' => 'Shipper City',
+                        'StateOrProvinceCode' => 'CA',
+                        'PostalCode' => '12345',
+                        'CountryCode' => 'US'
+                    )
+                ),
+                'Recipient' => array(
+                    'Address' => array(
+                        'StreetLines' => array('Recipient Address Line 1'),
+                        'City' => 'Recipient City',
+                        'StateOrProvinceCode' => 'NY',
+                        'PostalCode' => '67890',
+                        'CountryCode' => 'US',
+                        'Residential' => false
+                    )
+                ),
+                'ShippingChargesPayment' => array(
+                    'PaymentType' => 'SENDER',
+                    'Payor' => array(
+                        'ResponsibleParty' => array(
+                            'AccountNumber' => $account_number
+                        )
+                    )
+                ),
+                'RateRequestTypes' => 'ACCOUNT',
+                'PackageCount' => '1',
+                'RequestedPackageLineItems' => array(
+                    '0' => array(
+                        'GroupPackageCount' => 1,
+                        'Weight' => array(
+                            'Units' => 'LB',
+                            'Value' => 10
+                        ),
+                        'Dimensions' => array(
+                            'Length' => 10,
+                            'Width' => 10,
+                            'Height' => 10,
+                            'Units' => 'IN'
+                        )
+                    )
+                )
+            )
+        );
+
+        // Send the request
+        $response = $client->getRates($request);
+
+        // Extract the shipping cost from the response
+        // This example assumes the shipping cost is in 'RateReplyDetails'
+        $shipping_cost = $response->RateReplyDetails->RatedShipmentDetails->ShipmentRateDetail->TotalNetCharge->Amount;
+
+        return $shipping_cost;
+    }
     
 }
