@@ -788,6 +788,45 @@ class Cart extends CartCore
         return true;
     }
 
+    private function getBoxingDetails($items)
+    {
+        // API URL
+        $url = 'http://staging.etfapis.eteknowledge.com/Packingbreakdown/api/Dimensions';
+
+        // Initialize cURL
+        $ch = curl_init($url);
+
+        // Set cURL options
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json'));
+
+        // Convert items array to JSON
+        $jsonData = json_encode($items);
+
+        // Set POST fields
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $jsonData);
+
+        // Execute the request
+        $response = curl_exec($ch);
+
+        // Check for cURL errors
+        if ($response === false) {
+            $error = curl_error($ch);
+            curl_close($ch);
+            throw new Exception('Curl error: ' . $error);
+        }
+
+        // Close cURL session
+        curl_close($ch);
+
+        // Decode the response
+        $boxingDetails = json_decode($response, true);
+
+        // Return the boxing details
+        return $boxingDetails;
+    }
+    
     private function getFedExShippingCost()
     {
 
