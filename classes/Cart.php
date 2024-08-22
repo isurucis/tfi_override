@@ -477,11 +477,30 @@ class Cart extends CartCore
         bool $keepOrderPrices = false
     ) {
         if ($id_carrier === 8) {//FedEx Standard Overnight
-            /*$total_shipping_cost = $this->getFedExShippingCost();*/
+            /*$total_shipping_cost = $this->getFedExShippingCost();
             $items = [
             ["id" => 0, "ponumber" => 0, "ciscode" => "108033", "sku" => 0, "description" => null, "qty" => 20, "UOM" => null, "individualPacked" => 0, "shipp_withCups" => 0, "cust_type_id" => 4, "Low_temperature" => 0, "High_temperature" => 0],
             ["id" => 0, "ponumber" => 0, "ciscode" => "120557", "sku" => 0, "description" => null, "qty" => 20, "UOM" => null, "individualPacked" => 0, "shipp_withCups" => 0, "cust_type_id" => 4, "Low_temperature" => 0, "High_temperature" => 0],
-            ];
+            ];*/
+            $items = [];
+            foreach ($this->getProducts() as $product) {
+                $items[] = [
+                    'id' => 0,
+                    'ponumber' => 0,
+                    'ciscode' => $product['reference'],
+                    'sku' => 0,
+                    'description' => null,
+                    'qty' => $product['cart_quantity'],
+                    'UOM' => null,
+                    'individualPacked' => 0,
+                    'shipp_withCups' => 0,
+                    'cust_type_id' => 4,
+                    'Low_temperature' => 0,
+                    'High_temperature' => 0
+                ];
+            }
+
+            
 
             $boxingDetails = $this->getBoxingDetails($items);
             $totalWeight = 0;
