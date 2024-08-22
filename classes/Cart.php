@@ -484,7 +484,11 @@ class Cart extends CartCore
             ];
 
             $boxingDetails = $this->getBoxingDetails($items);
-            $total_shipping_cost =20;
+            $totalWeight = 0;
+            foreach ($response[0]['lineItems'] as $item) {
+                $totalWeight += $item['Weight'];
+            }
+            $total_shipping_cost =$totalWeight*0.2;
             return $total_shipping_cost;
         } else {
             if ($this->isVirtualCart()) {
