@@ -866,7 +866,7 @@ class Cart extends CartCore
         $meter_number = '259195573';
 
         // Create the SOAP client
-        $client = new SoapClient('/RateServiceDefinitions.wsdl', array('trace' => 1));
+        $client = new SoapClient('https://raw.githubusercontent.com/jzempel/fedex/master/fedex/wsdls/RateService_v18.wsdl', array('trace' => 1));
 
         // Set up the request data
         $request = array(
