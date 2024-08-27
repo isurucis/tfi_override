@@ -887,7 +887,7 @@ class Cart extends CartCore
                 'ServiceId' => 'crs',
                 'Major' => '18',
                 'Intermediate' => '0',
-                'Minor' => '0'
+                'Minor' => '1'
             ),
             'RequestedShipment' => array(
                 'DropoffType' => 'REGULAR_PICKUP',
