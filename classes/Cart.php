@@ -885,7 +885,7 @@ class Cart extends CartCore
             ),
             'Version' => array(
                 'ServiceId' => 'crs',
-                'Major' => '26',
+                'Major' => '18',
                 'Intermediate' => '0',
                 'Minor' => '0'
             ),
