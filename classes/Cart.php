@@ -23,6 +23,8 @@
  * @license   https://opensource.org/licenses/OSL-3.0 Open Software License (OSL 3.0)
  * International Registered Trademark & Property of PrestaShop SA
  */
+require 'vendor/autoload.php';
+
 if (!defined('_PS_VERSION_')) {
     exit;
 }
@@ -858,118 +860,91 @@ class Cart extends CartCore
     
     private function getFedExShippingCost()
     {
+        
+        use FedEx\RateService\Request;
+        use FedEx\RateService\ComplexType;
+        use FedEx\RateService\SimpleType;
 
-        // Set up FedEx API credentials
-        $api_key = 'PbHxzpmMPlKBYdJs';
-        $api_password = 'yGtrfupfDmCipEmODFa44644c';
-        $account_number = '707910399';
-        $meter_number = '259195573';
-
-        // Create the SOAP client
-        //$client = new SoapClient('https://raw.githubusercontent.com/jzempel/fedex/master/fedex/wsdls/RateService_v18.wsdl', array('trace' => 1));
-        $client = new SoapClient(
-            'https://raw.githubusercontent.com/isurucis/tfi_override/main/classes/RateService_v22.wsdl',
-            array('trace' => 1, 'exceptions' => 1)
-        );
-        // Set up the request data
-        $request = array(
-            'WebAuthenticationDetail' => array(
-                'UserCredential' => array(
-                    'Key' => $api_key,
-                    'Password' => $api_password
-                )
-            ),
-            'ClientDetail' => array(
-                'AccountNumber' => $account_number,
-                'MeterNumber' => $meter_number
-            ),
-            'TransactionDetail' => array(
-                'CustomerTransactionId' => ' *** Rate Request using PHP ***'
-            ),
-            'Version' => array(
-                'ServiceId' => 'crs',
-                'Major' => '22',
-                'Intermediate' => '0',
-                'Minor' => '0'
-            ),
-            'RequestedShipment' => array(
-                'DropoffType' => 'REGULAR_PICKUP',
-                'ServiceType' => 'FEDEX_GROUND', // Example: Change as needed
-                'PackagingType' => 'YOUR_PACKAGING',
-                'Shipper' => array(
-                    'Address' => array(
-                        'StreetLines' => array('1405 W 178th St'),
-                        'City' => 'Gardena',
-                        'StateOrProvinceCode' => 'CA',
-                        'PostalCode' => '90248',
-                        'CountryCode' => 'US'
-                    )
-                ),
-                'Recipient' => array(
-                    'Address' => array(
-                        'StreetLines' => array('2389 Air Park Rd'),
-                        'City' => 'Rhinelander',
-                        'StateOrProvinceCode' => 'WI',
-                        'PostalCode' => '54501',
-                        'CountryCode' => 'US',
-                        'Residential' => false
-                    )
-                ),
-                'ShippingChargesPayment' => array(
-                    'PaymentType' => 'SENDER',
-                    'Payor' => array(
-                        'ResponsibleParty' => array(
-                            'AccountNumber' => $account_number
-                        )
-                    )
-                ),
-                'RateRequestTypes' => 'ACCOUNT',
-                'PackageCount' => '1',
-                'RequestedPackageLineItems' => array(
-                    '0' => array(
-                        'GroupPackageCount' => 1,
-                        'Weight' => array(
-                            'Units' => 'LB',
-                            'Value' => 10
-                        ),
-                        'Dimensions' => array(
-                            'Length' => 10,
-                            'Width' => 10,
-                            'Height' => 10,
-                            'Units' => 'IN'
-                        )
-                    )
-                )
-            )
-        );
-
-        try {
-            // Send the request
-            $response = $client->getRates($request);
-    
-            // Log or display the request and response for debugging
-            echo "REQUEST:\n" . htmlspecialchars($client->__getLastRequest()) . "\n";
-            echo "RESPONSE:\n" . htmlspecialchars($client->__getLastResponse()) . "\n";
-    
-            // Extract the shipping cost from the response
-            if (isset($response->RateReplyDetails->RatedShipmentDetails->ShipmentRateDetail->TotalNetCharge->Amount)) {
-                $shipping_cost = $response->RateReplyDetails->RatedShipmentDetails->ShipmentRateDetail->TotalNetCharge->Amount;
-                return $shipping_cost;
-            } else {
-                // Handle the case where the response structure is unexpected
-                throw new Exception('Unexpected response structure.');
+        $rateRequest = new ComplexType\RateRequest();
+        
+        //authentication & client details
+        $rateRequest->WebAuthenticationDetail->UserCredential->Key = 'PbHxzpmMPlKBYdJs';
+        $rateRequest->WebAuthenticationDetail->UserCredential->Password = 'yGtrfupfDmCipEmODFa44644c';
+        $rateRequest->ClientDetail->AccountNumber = '707910399';
+        $rateRequest->ClientDetail->MeterNumber = '259195573';
+        
+        $rateRequest->TransactionDetail->CustomerTransactionId = 'testing rate service request';
+        
+        //version
+        $rateRequest->Version->ServiceId = 'crs';
+        $rateRequest->Version->Major = 31;
+        $rateRequest->Version->Minor = 0;
+        $rateRequest->Version->Intermediate = 0;
+        
+        $rateRequest->ReturnTransitAndCommit = true;
+        
+        //shipper
+        $rateRequest->RequestedShipment->PreferredCurrency = 'USD';
+        $rateRequest->RequestedShipment->Shipper->Address->StreetLines = ['10 Fed Ex Pkwy'];
+        $rateRequest->RequestedShipment->Shipper->Address->City = 'Memphis';
+        $rateRequest->RequestedShipment->Shipper->Address->StateOrProvinceCode = 'TN';
+        $rateRequest->RequestedShipment->Shipper->Address->PostalCode = 38115;
+        $rateRequest->RequestedShipment->Shipper->Address->CountryCode = 'US';
+        
+        //recipient
+        $rateRequest->RequestedShipment->Recipient->Address->StreetLines = ['13450 Farmcrest Ct'];
+        $rateRequest->RequestedShipment->Recipient->Address->City = 'Herndon';
+        $rateRequest->RequestedShipment->Recipient->Address->StateOrProvinceCode = 'VA';
+        $rateRequest->RequestedShipment->Recipient->Address->PostalCode = 20171;
+        $rateRequest->RequestedShipment->Recipient->Address->CountryCode = 'US';
+        
+        //shipping charges payment
+        $rateRequest->RequestedShipment->ShippingChargesPayment->PaymentType = SimpleType\PaymentType::_SENDER;
+        
+        //rate request types
+        $rateRequest->RequestedShipment->RateRequestTypes = [SimpleType\RateRequestType::_PREFERRED, SimpleType\RateRequestType::_LIST];
+        
+        $rateRequest->RequestedShipment->PackageCount = 2;
+        
+        //create package line items
+        $rateRequest->RequestedShipment->RequestedPackageLineItems = [new ComplexType\RequestedPackageLineItem(), new ComplexType\RequestedPackageLineItem()];
+        
+        //package 1
+        $rateRequest->RequestedShipment->RequestedPackageLineItems[0]->Weight->Value = 2;
+        $rateRequest->RequestedShipment->RequestedPackageLineItems[0]->Weight->Units = SimpleType\WeightUnits::_LB;
+        $rateRequest->RequestedShipment->RequestedPackageLineItems[0]->Dimensions->Length = 10;
+        $rateRequest->RequestedShipment->RequestedPackageLineItems[0]->Dimensions->Width = 10;
+        $rateRequest->RequestedShipment->RequestedPackageLineItems[0]->Dimensions->Height = 3;
+        $rateRequest->RequestedShipment->RequestedPackageLineItems[0]->Dimensions->Units = SimpleType\LinearUnits::_IN;
+        $rateRequest->RequestedShipment->RequestedPackageLineItems[0]->GroupPackageCount = 1;
+        
+        //package 2
+        $rateRequest->RequestedShipment->RequestedPackageLineItems[1]->Weight->Value = 5;
+        $rateRequest->RequestedShipment->RequestedPackageLineItems[1]->Weight->Units = SimpleType\WeightUnits::_LB;
+        $rateRequest->RequestedShipment->RequestedPackageLineItems[1]->Dimensions->Length = 20;
+        $rateRequest->RequestedShipment->RequestedPackageLineItems[1]->Dimensions->Width = 20;
+        $rateRequest->RequestedShipment->RequestedPackageLineItems[1]->Dimensions->Height = 10;
+        $rateRequest->RequestedShipment->RequestedPackageLineItems[1]->Dimensions->Units = SimpleType\LinearUnits::_IN;
+        $rateRequest->RequestedShipment->RequestedPackageLineItems[1]->GroupPackageCount = 1;
+        
+        $rateServiceRequest = new Request();
+        $rateServiceRequest->getSoapClient()->__setLocation(Request::PRODUCTION_URL); //use production URL
+        
+        $rateReply = $rateServiceRequest->getGetRatesReply($rateRequest); // send true as the 2nd argument to return the SoapClient's stdClass response.
+        
+        
+        if (!empty($rateReply->RateReplyDetails)) {
+            foreach ($rateReply->RateReplyDetails as $rateReplyDetail) {
+                var_dump($rateReplyDetail->ServiceType);
+                if (!empty($rateReplyDetail->RatedShipmentDetails)) {
+                    foreach ($rateReplyDetail->RatedShipmentDetails as $ratedShipmentDetail) {
+                        var_dump($ratedShipmentDetail->ShipmentRateDetail->RateType . ": " . $ratedShipmentDetail->ShipmentRateDetail->TotalNetCharge->Amount);
+                    }
+                }
+                echo "<hr />";
             }
-        } catch (SoapFault $e) {
-            // Log or display the error details
-            echo "SOAP Fault: (faultcode: {$e->faultcode}, faultstring: {$e->faultstring})\n";
-            echo "REQUEST:\n" . htmlspecialchars($client->__getLastRequest()) . "\n";
-            echo "RESPONSE:\n" . htmlspecialchars($client->__getLastResponse()) . "\n";
-            return false; // Return false or handle error as needed
-        } catch (Exception $e) {
-            // Handle any other exceptions
-            echo "Error: " . $e->getMessage();
-            return false; // Return false or handle error as needed
         }
+        
     }
     
 }
