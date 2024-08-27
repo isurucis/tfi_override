@@ -1,4 +1,9 @@
 <?php
+require 'vendor/autoload.php';
+
+use FedEx\RateService\Request;
+use FedEx\RateService\ComplexType;
+use FedEx\RateService\SimpleType;
 /**
  * 2007-2020 PrestaShop and Contributors
  *
@@ -23,11 +28,7 @@
  * @license   https://opensource.org/licenses/OSL-3.0 Open Software License (OSL 3.0)
  * International Registered Trademark & Property of PrestaShop SA
  */
-require 'vendor/autoload.php';
 
-use FedEx\RateService\Request;
-use FedEx\RateService\ComplexType;
-use FedEx\RateService\SimpleType;
 
 if (!defined('_PS_VERSION_')) {
     exit;
