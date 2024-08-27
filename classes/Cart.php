@@ -866,8 +866,11 @@ class Cart extends CartCore
         $meter_number = '259195573';
 
         // Create the SOAP client
-        $client = new SoapClient('https://raw.githubusercontent.com/jzempel/fedex/master/fedex/wsdls/RateService_v18.wsdl', array('trace' => 1));
-
+        //$client = new SoapClient('https://raw.githubusercontent.com/jzempel/fedex/master/fedex/wsdls/RateService_v18.wsdl', array('trace' => 1));
+        $client = new SoapClient(
+            'https://raw.githubusercontent.com/jzempel/fedex/master/fedex/wsdls/RateService_v18.wsdl',
+            array('trace' => 1, 'exceptions' => 1)
+        );
         // Set up the request data
         $request = array(
             'WebAuthenticationDetail' => array(
@@ -940,6 +943,7 @@ class Cart extends CartCore
             )
         );
 
+        try {
         // Send the request
         $response = $client->getRates($request);
 
@@ -948,6 +952,10 @@ class Cart extends CartCore
         $shipping_cost = $response->RateReplyDetails->RatedShipmentDetails->ShipmentRateDetail->TotalNetCharge->Amount;
 
         return $shipping_cost;
+        } catch (SoapFault $e) {
+            // Log or display the error
+            echo "SOAP Fault: (faultcode: {$e->faultcode}, faultstring: {$e->faultstring})";
+        }
     }
     
 }
