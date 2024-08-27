@@ -944,17 +944,31 @@ class Cart extends CartCore
         );
 
         try {
-        // Send the request
-        $response = $client->getRates($request);
-
-        // Extract the shipping cost from the response
-        // This example assumes the shipping cost is in 'RateReplyDetails'
-        $shipping_cost = $response->RateReplyDetails->RatedShipmentDetails->ShipmentRateDetail->TotalNetCharge->Amount;
-
-        return $shipping_cost;
+            // Send the request
+            $response = $client->getRates($request);
+    
+            // Log or display the request and response for debugging
+            echo "REQUEST:\n" . htmlspecialchars($client->__getLastRequest()) . "\n";
+            echo "RESPONSE:\n" . htmlspecialchars($client->__getLastResponse()) . "\n";
+    
+            // Extract the shipping cost from the response
+            if (isset($response->RateReplyDetails->RatedShipmentDetails->ShipmentRateDetail->TotalNetCharge->Amount)) {
+                $shipping_cost = $response->RateReplyDetails->RatedShipmentDetails->ShipmentRateDetail->TotalNetCharge->Amount;
+                return $shipping_cost;
+            } else {
+                // Handle the case where the response structure is unexpected
+                throw new Exception('Unexpected response structure.');
+            }
         } catch (SoapFault $e) {
-            // Log or display the error
-            echo "SOAP Fault: (faultcode: {$e->faultcode}, faultstring: {$e->faultstring})";
+            // Log or display the error details
+            echo "SOAP Fault: (faultcode: {$e->faultcode}, faultstring: {$e->faultstring})\n";
+            echo "REQUEST:\n" . htmlspecialchars($client->__getLastRequest()) . "\n";
+            echo "RESPONSE:\n" . htmlspecialchars($client->__getLastResponse()) . "\n";
+            return false; // Return false or handle error as needed
+        } catch (Exception $e) {
+            // Handle any other exceptions
+            echo "Error: " . $e->getMessage();
+            return false; // Return false or handle error as needed
         }
     }
     
