@@ -25,6 +25,10 @@
  */
 require 'vendor/autoload.php';
 
+use FedEx\RateService\Request;
+use FedEx\RateService\ComplexType;
+use FedEx\RateService\SimpleType;
+
 if (!defined('_PS_VERSION_')) {
     exit;
 }
@@ -860,10 +864,6 @@ class Cart extends CartCore
     
     private function getFedExShippingCost()
     {
-        
-        use FedEx\RateService\Request;
-        use FedEx\RateService\ComplexType;
-        use FedEx\RateService\SimpleType;
 
         $rateRequest = new ComplexType\RateRequest();
         
