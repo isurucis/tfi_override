@@ -868,7 +868,7 @@ class Cart extends CartCore
         // Create the SOAP client
         //$client = new SoapClient('https://raw.githubusercontent.com/jzempel/fedex/master/fedex/wsdls/RateService_v18.wsdl', array('trace' => 1));
         $client = new SoapClient(
-            'https://raw.githubusercontent.com/jzempel/fedex/master/fedex/wsdls/RateService_v18.wsdl',
+            'https://raw.githubusercontent.com/isurucis/tfi_override/main/classes/RateService_v22.wsdl',
             array('trace' => 1, 'exceptions' => 1)
         );
         // Set up the request data
@@ -888,9 +888,9 @@ class Cart extends CartCore
             ),
             'Version' => array(
                 'ServiceId' => 'crs',
-                'Major' => '18',
+                'Major' => '22',
                 'Intermediate' => '0',
-                'Minor' => '1'
+                'Minor' => '0'
             ),
             'RequestedShipment' => array(
                 'DropoffType' => 'REGULAR_PICKUP',
@@ -898,19 +898,19 @@ class Cart extends CartCore
                 'PackagingType' => 'YOUR_PACKAGING',
                 'Shipper' => array(
                     'Address' => array(
-                        'StreetLines' => array('Shipper Address Line 1'),
-                        'City' => 'Shipper City',
+                        'StreetLines' => array('1405 W 178th St'),
+                        'City' => 'Gardena',
                         'StateOrProvinceCode' => 'CA',
-                        'PostalCode' => '12345',
+                        'PostalCode' => '90248',
                         'CountryCode' => 'US'
                     )
                 ),
                 'Recipient' => array(
                     'Address' => array(
-                        'StreetLines' => array('Recipient Address Line 1'),
-                        'City' => 'Recipient City',
-                        'StateOrProvinceCode' => 'NY',
-                        'PostalCode' => '67890',
+                        'StreetLines' => array('2389 Air Park Rd'),
+                        'City' => 'Rhinelander',
+                        'StateOrProvinceCode' => 'WI',
+                        'PostalCode' => '54501',
                         'CountryCode' => 'US',
                         'Residential' => false
                     )
