@@ -1,9 +1,11 @@
 <?php
-require_once __DIR__ . '/vendor/autoload.php';
-
+require_once __DIR__ . '/../../comp/vendor/autoload.php';
+use FedEx\RateService\ComplexType\RateRequest;
 use FedEx\RateService\Request;
 use FedEx\RateService\ComplexType;
 use FedEx\RateService\SimpleType;
+
+
 /**
  * 2007-2020 PrestaShop and Contributors
  *
@@ -484,7 +486,7 @@ class Cart extends CartCore
         bool $keepOrderPrices = false
     ) {
         if ($id_carrier === 8) {//FedEx Standard Overnight
-            $total_shipping_cost = $this->getFedExShippingCost();
+            
             /*$items = [
             ["id" => 0, "ponumber" => 0, "ciscode" => "108033", "sku" => 0, "description" => null, "qty" => 20, "UOM" => null, "individualPacked" => 0, "shipp_withCups" => 0, "cust_type_id" => 4, "Low_temperature" => 0, "High_temperature" => 0],
             ["id" => 0, "ponumber" => 0, "ciscode" => "120557", "sku" => 0, "description" => null, "qty" => 20, "UOM" => null, "individualPacked" => 0, "shipp_withCups" => 0, "cust_type_id" => 4, "Low_temperature" => 0, "High_temperature" => 0],
@@ -511,10 +513,11 @@ class Cart extends CartCore
 
             $boxingDetails = $this->getBoxingDetails($items);
             $totalWeight = 0;
-            foreach ($boxingDetails[0]['lineItems'] as $item) {
-                $totalWeight += $item['Weight'];
-            }
-            $total_shipping_cost =$totalWeight*0.2;
+            //foreach ($boxingDetails[0]['lineItems'] as $item) {
+            //    $totalWeight += $item['Weight'];
+            //}
+            //$total_shipping_cost =$totalWeight*0.2;
+            $total_shipping_cost = $this->getFedExShippingCost($boxingDetails);
             return $total_shipping_cost;
         } else {
             if ($this->isVirtualCart()) {
@@ -858,15 +861,20 @@ class Cart extends CartCore
 
         // Decode the response
         $boxingDetails = json_decode($response, true);
+        
+        
+        //echo '<pre>';
+        //var_dump($boxingDetails);
+        //echo '</pre>';
 
         // Return the boxing details
         return $boxingDetails;
     }
     
-    private function getFedExShippingCost()
+    private function getFedExShippingCost($boxingDetails=null)
     {
 
-        $rateRequest = new ComplexType\RateRequest();
+        $rateRequest = new RateRequest();
         
         //authentication & client details
         $rateRequest->WebAuthenticationDetail->UserCredential->Key = 'PbHxzpmMPlKBYdJs';
@@ -899,8 +907,9 @@ class Cart extends CartCore
         $rateRequest->RequestedShipment->Recipient->Address->PostalCode = 20171;
         $rateRequest->RequestedShipment->Recipient->Address->CountryCode = 'US';
         
-        //shipping charges payment
+        //shipping type & charges payment type
         $rateRequest->RequestedShipment->ShippingChargesPayment->PaymentType = SimpleType\PaymentType::_SENDER;
+        $rateRequest->RequestedShipment->ServiceType = SimpleType\ServiceType::_STANDARD_OVERNIGHT; 
         
         //rate request types
         $rateRequest->RequestedShipment->RateRequestTypes = [SimpleType\RateRequestType::_PREFERRED, SimpleType\RateRequestType::_LIST];
@@ -910,24 +919,51 @@ class Cart extends CartCore
         //create package line items
         $rateRequest->RequestedShipment->RequestedPackageLineItems = [new ComplexType\RequestedPackageLineItem(), new ComplexType\RequestedPackageLineItem()];
         
-        //package 1
-        $rateRequest->RequestedShipment->RequestedPackageLineItems[0]->Weight->Value = 2;
-        $rateRequest->RequestedShipment->RequestedPackageLineItems[0]->Weight->Units = SimpleType\WeightUnits::_LB;
-        $rateRequest->RequestedShipment->RequestedPackageLineItems[0]->Dimensions->Length = 10;
-        $rateRequest->RequestedShipment->RequestedPackageLineItems[0]->Dimensions->Width = 10;
-        $rateRequest->RequestedShipment->RequestedPackageLineItems[0]->Dimensions->Height = 3;
-        $rateRequest->RequestedShipment->RequestedPackageLineItems[0]->Dimensions->Units = SimpleType\LinearUnits::_IN;
-        $rateRequest->RequestedShipment->RequestedPackageLineItems[0]->GroupPackageCount = 1;
+        if (!empty($boxingDetails)) {
+            //echo '<pre>';
+            //var_dump($boxingDetails);
+            //echo '</pre>';
+            $it=0;
+            foreach ($boxingDetails[0]['lineItems'] as $item) {
+                
+                echo $it.'<pre>';
+                var_dump($item);
+                echo '</pre>';
+                
+                $rateRequest->RequestedShipment->RequestedPackageLineItems[$it]->Weight->Value = $item["Weight"];
+                $rateRequest->RequestedShipment->RequestedPackageLineItems[$it]->Weight->Units = SimpleType\WeightUnits::_LB;
+                $rateRequest->RequestedShipment->RequestedPackageLineItems[$it]->Dimensions->Length = $item["Length"];
+                $rateRequest->RequestedShipment->RequestedPackageLineItems[$it]->Dimensions->Width = $item["Width"];
+                $rateRequest->RequestedShipment->RequestedPackageLineItems[$it]->Dimensions->Height = $item["Height"];
+                $rateRequest->RequestedShipment->RequestedPackageLineItems[$it]->Dimensions->Units = SimpleType\LinearUnits::_IN;
+                $rateRequest->RequestedShipment->RequestedPackageLineItems[$it]->GroupPackageCount = 1;
+                $it=$it+1;
+            }
+            
+        }else{
+            
+            //package 1
+            $rateRequest->RequestedShipment->RequestedPackageLineItems[0]->Weight->Value = 2;
+            $rateRequest->RequestedShipment->RequestedPackageLineItems[0]->Weight->Units = SimpleType\WeightUnits::_LB;
+            $rateRequest->RequestedShipment->RequestedPackageLineItems[0]->Dimensions->Length = 10;
+            $rateRequest->RequestedShipment->RequestedPackageLineItems[0]->Dimensions->Width = 10;
+            $rateRequest->RequestedShipment->RequestedPackageLineItems[0]->Dimensions->Height = 3;
+            $rateRequest->RequestedShipment->RequestedPackageLineItems[0]->Dimensions->Units = SimpleType\LinearUnits::_IN;
+            $rateRequest->RequestedShipment->RequestedPackageLineItems[0]->GroupPackageCount = 1;
+            
+            //package 2
+            $rateRequest->RequestedShipment->RequestedPackageLineItems[1]->Weight->Value = 5;
+            $rateRequest->RequestedShipment->RequestedPackageLineItems[1]->Weight->Units = SimpleType\WeightUnits::_LB;
+            $rateRequest->RequestedShipment->RequestedPackageLineItems[1]->Dimensions->Length = 20;
+            $rateRequest->RequestedShipment->RequestedPackageLineItems[1]->Dimensions->Width = 20;
+            $rateRequest->RequestedShipment->RequestedPackageLineItems[1]->Dimensions->Height = 10;
+            $rateRequest->RequestedShipment->RequestedPackageLineItems[1]->Dimensions->Units = SimpleType\LinearUnits::_IN;
+            $rateRequest->RequestedShipment->RequestedPackageLineItems[1]->GroupPackageCount = 1;
+        }
+
         
-        //package 2
-        $rateRequest->RequestedShipment->RequestedPackageLineItems[1]->Weight->Value = 5;
-        $rateRequest->RequestedShipment->RequestedPackageLineItems[1]->Weight->Units = SimpleType\WeightUnits::_LB;
-        $rateRequest->RequestedShipment->RequestedPackageLineItems[1]->Dimensions->Length = 20;
-        $rateRequest->RequestedShipment->RequestedPackageLineItems[1]->Dimensions->Width = 20;
-        $rateRequest->RequestedShipment->RequestedPackageLineItems[1]->Dimensions->Height = 10;
-        $rateRequest->RequestedShipment->RequestedPackageLineItems[1]->Dimensions->Units = SimpleType\LinearUnits::_IN;
-        $rateRequest->RequestedShipment->RequestedPackageLineItems[1]->GroupPackageCount = 1;
         
+        //var_dump($rateRequest->RequestedShipment->RequestedPackageLineItems[0]);
         $rateServiceRequest = new Request();
         $rateServiceRequest->getSoapClient()->__setLocation(Request::PRODUCTION_URL); //use production URL
         
@@ -946,6 +982,12 @@ class Cart extends CartCore
             }
         }
         
+        //var_dump($rateReply->RateReplyDetails[0]->RatedShipmentDetails);
+        $rate = $rateReply->RateReplyDetails[0]->RatedShipmentDetails[0]->ShipmentRateDetail->TotalNetCharge->Amount;
+        return $rate;
     }
+    
+    
+    
     
 }
