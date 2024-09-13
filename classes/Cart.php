@@ -494,18 +494,8 @@ class Cart extends CartCore
             $items = [];
             foreach ($this->getProducts() as $product) {
                 $items[] = [
-                    'id' => 0,
-                    'ponumber' => 0,
-                    'ciscode' => $product['reference'],
-                    'sku' => 0,
-                    'description' => null,
-                    'qty' => $product['cart_quantity'],
-                    'UOM' => null,
-                    'individualPacked' => 0,
-                    'shipp_withCups' => 0,
-                    'cust_type_id' => 4,
-                    'Low_temperature' => 0,
-                    'High_temperature' => 0
+                    'Quantity' => $product['cart_quantity'],
+                    'SKU' => $product['reference']
                 ];
             }
 
@@ -830,7 +820,7 @@ class Cart extends CartCore
     private function getBoxingDetails($items)
     {
         // API URL
-        $url = 'http://staging.etfapis.eteknowledge.com/Packingbreakdown/api/Dimensions';
+        $url = 'http://staging.etfapis.eteknowledge.com/BoxBagCalculationApi/api/Dimensions/process?customerType=4';
 
         // Initialize cURL
         $ch = curl_init($url);
@@ -920,10 +910,10 @@ class Cart extends CartCore
         $rateRequest->RequestedShipment->RequestedPackageLineItems = [new ComplexType\RequestedPackageLineItem(), new ComplexType\RequestedPackageLineItem()];
         
         if (!empty($boxingDetails)) {
-            //echo '<pre>';
-            //var_dump($boxingDetails);
-            //echo '</pre>';
-            $it=0;
+            echo '<pre>';
+            var_dump($boxingDetails);
+            echo '</pre>';
+            /*$it=0;
             foreach ($boxingDetails[0]['lineItems'] as $item) {
                 
                 echo $it.'<pre>';
@@ -938,7 +928,39 @@ class Cart extends CartCore
                 $rateRequest->RequestedShipment->RequestedPackageLineItems[$it]->Dimensions->Units = SimpleType\LinearUnits::_IN;
                 $rateRequest->RequestedShipment->RequestedPackageLineItems[$it]->GroupPackageCount = 1;
                 $it=$it+1;
-            }
+            }*/
+            
+            /*$it = 0; // Initialize the iterator variable
+
+            foreach ($boxingDetails[0]['lineItems'] as $item) {
+                
+                //echo $it.'<pre>';
+                //var_dump($item);
+                //echo '</pre>';
+                if($it<2){
+                $rateRequest->RequestedShipment->RequestedPackageLineItems[$it]->Weight->Value = $item["Weight"];
+                $rateRequest->RequestedShipment->RequestedPackageLineItems[$it]->Weight->Units = SimpleType\WeightUnits::_LB;
+                $rateRequest->RequestedShipment->RequestedPackageLineItems[$it]->Dimensions->Length = $item["Length"];
+                $rateRequest->RequestedShipment->RequestedPackageLineItems[$it]->Dimensions->Width = $item["Width"];
+                $rateRequest->RequestedShipment->RequestedPackageLineItems[$it]->Dimensions->Height = $item["Height"];
+                $rateRequest->RequestedShipment->RequestedPackageLineItems[$it]->Dimensions->Units = SimpleType\LinearUnits::_IN;
+                $rateRequest->RequestedShipment->RequestedPackageLineItems[$it]->GroupPackageCount = 1;
+                }
+                $it=$it+1;
+            }*/
+            
+            //package 1
+            $rateRequest->RequestedShipment->RequestedPackageLineItems[0]->Weight->Value = 2;
+            $rateRequest->RequestedShipment->RequestedPackageLineItems[0]->Weight->Units = SimpleType\WeightUnits::_LB;
+            $rateRequest->RequestedShipment->RequestedPackageLineItems[0]->Dimensions->Length = 10;
+            $rateRequest->RequestedShipment->RequestedPackageLineItems[0]->Dimensions->Width = 10;
+            $rateRequest->RequestedShipment->RequestedPackageLineItems[0]->Dimensions->Height = 3;
+            $rateRequest->RequestedShipment->RequestedPackageLineItems[0]->Dimensions->Units = SimpleType\LinearUnits::_IN;
+            $rateRequest->RequestedShipment->RequestedPackageLineItems[0]->GroupPackageCount = 1;
+
+
+            
+            
             
         }else{
             
@@ -969,7 +991,7 @@ class Cart extends CartCore
         
         $rateReply = $rateServiceRequest->getGetRatesReply($rateRequest); // send true as the 2nd argument to return the SoapClient's stdClass response.
         
-        
+        /*
         if (!empty($rateReply->RateReplyDetails)) {
             foreach ($rateReply->RateReplyDetails as $rateReplyDetail) {
                 var_dump($rateReplyDetail->ServiceType);
@@ -980,7 +1002,7 @@ class Cart extends CartCore
                 }
                 echo "<hr />";
             }
-        }
+        }*/
         
         //var_dump($rateReply->RateReplyDetails[0]->RatedShipmentDetails);
         $rate = $rateReply->RateReplyDetails[0]->RatedShipmentDetails[0]->ShipmentRateDetail->TotalNetCharge->Amount;
