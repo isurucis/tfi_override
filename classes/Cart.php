@@ -487,28 +487,23 @@ class Cart extends CartCore
     ) {
         if ($id_carrier === 8) {//FedEx Standard Overnight
             
-            /*$items = [
-            ["id" => 0, "ponumber" => 0, "ciscode" => "108033", "sku" => 0, "description" => null, "qty" => 20, "UOM" => null, "individualPacked" => 0, "shipp_withCups" => 0, "cust_type_id" => 4, "Low_temperature" => 0, "High_temperature" => 0],
-            ["id" => 0, "ponumber" => 0, "ciscode" => "120557", "sku" => 0, "description" => null, "qty" => 20, "UOM" => null, "individualPacked" => 0, "shipp_withCups" => 0, "cust_type_id" => 4, "Low_temperature" => 0, "High_temperature" => 0],
-            ];*/
-            $items = [];
+
+            if ($this->cached_shipping_cost !== null) {
+                return $this->cached_shipping_cost;
+            }
+
+             $items = [];
             foreach ($this->getProducts() as $product) {
                 $items[] = [
                     'Quantity' => $product['cart_quantity'],
                     'SKU' => $product['reference']
                 ];
             }
-
-            
-
+                                
             $boxingDetails = $this->getBoxingDetails($items);
-            $totalWeight = 0;
-            //foreach ($boxingDetails[0]['lineItems'] as $item) {
-            //    $totalWeight += $item['Weight'];
-            //}
-            //$total_shipping_cost =$totalWeight*0.2;
-            $total_shipping_cost = $this->getFedExShippingCost($boxingDetails);
-            return $total_shipping_cost;
+            $this->cached_shipping_cost = $this->getFedExShippingCost($boxingDetails);
+            
+            return $this->cached_shipping_cost;
         } else {
             if ($this->isVirtualCart()) {
                 return 0;
