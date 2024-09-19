@@ -6,6 +6,7 @@ use FedEx\RateService\ComplexType;
 use FedEx\RateService\SimpleType;
 
 
+
 /**
  * 2007-2020 PrestaShop and Contributors
  *
@@ -43,6 +44,7 @@ class Cart extends CartCore
     * version: 5.3.1
     */
     public static $wkIdProductAttribute;
+    private $cached_shipping_cost = null;
     /*
     * module: preorder
     * date: 2024-08-14 21:44:17
@@ -487,8 +489,8 @@ class Cart extends CartCore
     ) {
         if ($id_carrier === 8) {//FedEx Standard Overnight
             
-
-            if ($this->cached_shipping_cost !== null) {
+            
+             if ($this->cached_shipping_cost !== null) {
                 return $this->cached_shipping_cost;
             }
 
@@ -827,6 +829,9 @@ class Cart extends CartCore
 
         // Convert items array to JSON
         $jsonData = json_encode($items);
+        //echo '<pre>';
+        //var_dump($jsonData);
+        //echo '</pre>';
 
         // Set POST fields
         curl_setopt($ch, CURLOPT_POSTFIELDS, $jsonData);
@@ -856,153 +861,122 @@ class Cart extends CartCore
         return $boxingDetails;
     }
     
-    private function getFedExShippingCost($boxingDetails=null)
+    private function getFedExShippingCost($boxingDetails = null)
     {
-
         $rateRequest = new RateRequest();
-        
-        //authentication & client details
+    
+        // Authentication & client details
         $rateRequest->WebAuthenticationDetail->UserCredential->Key = 'PbHxzpmMPlKBYdJs';
         $rateRequest->WebAuthenticationDetail->UserCredential->Password = 'yGtrfupfDmCipEmODFa44644c';
         $rateRequest->ClientDetail->AccountNumber = '707910399';
         $rateRequest->ClientDetail->MeterNumber = '259195573';
-        
+    
         $rateRequest->TransactionDetail->CustomerTransactionId = 'testing rate service request';
-        
-        //version
+    
+        // Version
         $rateRequest->Version->ServiceId = 'crs';
         $rateRequest->Version->Major = 31;
         $rateRequest->Version->Minor = 0;
         $rateRequest->Version->Intermediate = 0;
-        
+    
         $rateRequest->ReturnTransitAndCommit = true;
-        
-        //shipper
+    
+        // Shipper details
         $rateRequest->RequestedShipment->PreferredCurrency = 'USD';
         $rateRequest->RequestedShipment->Shipper->Address->StreetLines = ['10 Fed Ex Pkwy'];
         $rateRequest->RequestedShipment->Shipper->Address->City = 'Memphis';
         $rateRequest->RequestedShipment->Shipper->Address->StateOrProvinceCode = 'TN';
         $rateRequest->RequestedShipment->Shipper->Address->PostalCode = 38115;
         $rateRequest->RequestedShipment->Shipper->Address->CountryCode = 'US';
-        
-        //recipient
+    
+        // Recipient details
         $rateRequest->RequestedShipment->Recipient->Address->StreetLines = ['13450 Farmcrest Ct'];
         $rateRequest->RequestedShipment->Recipient->Address->City = 'Herndon';
         $rateRequest->RequestedShipment->Recipient->Address->StateOrProvinceCode = 'VA';
         $rateRequest->RequestedShipment->Recipient->Address->PostalCode = 20171;
         $rateRequest->RequestedShipment->Recipient->Address->CountryCode = 'US';
-        
-        //shipping type & charges payment type
+    
+        // Shipping type & charges payment type
         $rateRequest->RequestedShipment->ShippingChargesPayment->PaymentType = SimpleType\PaymentType::_SENDER;
-        $rateRequest->RequestedShipment->ServiceType = SimpleType\ServiceType::_STANDARD_OVERNIGHT; 
-        
-        //rate request types
+        $rateRequest->RequestedShipment->ServiceType = SimpleType\ServiceType::_STANDARD_OVERNIGHT;
+    
+        // Rate request types
         $rateRequest->RequestedShipment->RateRequestTypes = [SimpleType\RateRequestType::_PREFERRED, SimpleType\RateRequestType::_LIST];
-        
-        $rateRequest->RequestedShipment->PackageCount = 2;
-        
-        //create package line items
-        $rateRequest->RequestedShipment->RequestedPackageLineItems = [new ComplexType\RequestedPackageLineItem(), new ComplexType\RequestedPackageLineItem()];
-        
+    
+        // Initialize packages array
+        $requestedPackageLineItems = [];
+    
         if (!empty($boxingDetails)) {
-            echo '<pre>';
-            var_dump($boxingDetails);
-            echo '</pre>';
-            /*$it=0;
-            foreach ($boxingDetails[0]['lineItems'] as $item) {
-                
-                echo $it.'<pre>';
-                var_dump($item);
-                echo '</pre>';
-                
-                $rateRequest->RequestedShipment->RequestedPackageLineItems[$it]->Weight->Value = $item["Weight"];
-                $rateRequest->RequestedShipment->RequestedPackageLineItems[$it]->Weight->Units = SimpleType\WeightUnits::_LB;
-                $rateRequest->RequestedShipment->RequestedPackageLineItems[$it]->Dimensions->Length = $item["Length"];
-                $rateRequest->RequestedShipment->RequestedPackageLineItems[$it]->Dimensions->Width = $item["Width"];
-                $rateRequest->RequestedShipment->RequestedPackageLineItems[$it]->Dimensions->Height = $item["Height"];
-                $rateRequest->RequestedShipment->RequestedPackageLineItems[$it]->Dimensions->Units = SimpleType\LinearUnits::_IN;
-                $rateRequest->RequestedShipment->RequestedPackageLineItems[$it]->GroupPackageCount = 1;
-                $it=$it+1;
-            }*/
-            
-            /*$it = 0; // Initialize the iterator variable
-
-            foreach ($boxingDetails[0]['lineItems'] as $item) {
-                
-                //echo $it.'<pre>';
-                //var_dump($item);
-                //echo '</pre>';
-                if($it<2){
-                $rateRequest->RequestedShipment->RequestedPackageLineItems[$it]->Weight->Value = $item["Weight"];
-                $rateRequest->RequestedShipment->RequestedPackageLineItems[$it]->Weight->Units = SimpleType\WeightUnits::_LB;
-                $rateRequest->RequestedShipment->RequestedPackageLineItems[$it]->Dimensions->Length = $item["Length"];
-                $rateRequest->RequestedShipment->RequestedPackageLineItems[$it]->Dimensions->Width = $item["Width"];
-                $rateRequest->RequestedShipment->RequestedPackageLineItems[$it]->Dimensions->Height = $item["Height"];
-                $rateRequest->RequestedShipment->RequestedPackageLineItems[$it]->Dimensions->Units = SimpleType\LinearUnits::_IN;
-                $rateRequest->RequestedShipment->RequestedPackageLineItems[$it]->GroupPackageCount = 1;
-                }
-                $it=$it+1;
-            }*/
-            
-            //package 1
-            $rateRequest->RequestedShipment->RequestedPackageLineItems[0]->Weight->Value = 2;
-            $rateRequest->RequestedShipment->RequestedPackageLineItems[0]->Weight->Units = SimpleType\WeightUnits::_LB;
-            $rateRequest->RequestedShipment->RequestedPackageLineItems[0]->Dimensions->Length = 10;
-            $rateRequest->RequestedShipment->RequestedPackageLineItems[0]->Dimensions->Width = 10;
-            $rateRequest->RequestedShipment->RequestedPackageLineItems[0]->Dimensions->Height = 3;
-            $rateRequest->RequestedShipment->RequestedPackageLineItems[0]->Dimensions->Units = SimpleType\LinearUnits::_IN;
-            $rateRequest->RequestedShipment->RequestedPackageLineItems[0]->GroupPackageCount = 1;
-
-
-            
-            
-            
-        }else{
-            
-            //package 1
-            $rateRequest->RequestedShipment->RequestedPackageLineItems[0]->Weight->Value = 2;
-            $rateRequest->RequestedShipment->RequestedPackageLineItems[0]->Weight->Units = SimpleType\WeightUnits::_LB;
-            $rateRequest->RequestedShipment->RequestedPackageLineItems[0]->Dimensions->Length = 10;
-            $rateRequest->RequestedShipment->RequestedPackageLineItems[0]->Dimensions->Width = 10;
-            $rateRequest->RequestedShipment->RequestedPackageLineItems[0]->Dimensions->Height = 3;
-            $rateRequest->RequestedShipment->RequestedPackageLineItems[0]->Dimensions->Units = SimpleType\LinearUnits::_IN;
-            $rateRequest->RequestedShipment->RequestedPackageLineItems[0]->GroupPackageCount = 1;
-            
-            //package 2
-            $rateRequest->RequestedShipment->RequestedPackageLineItems[1]->Weight->Value = 5;
-            $rateRequest->RequestedShipment->RequestedPackageLineItems[1]->Weight->Units = SimpleType\WeightUnits::_LB;
-            $rateRequest->RequestedShipment->RequestedPackageLineItems[1]->Dimensions->Length = 20;
-            $rateRequest->RequestedShipment->RequestedPackageLineItems[1]->Dimensions->Width = 20;
-            $rateRequest->RequestedShipment->RequestedPackageLineItems[1]->Dimensions->Height = 10;
-            $rateRequest->RequestedShipment->RequestedPackageLineItems[1]->Dimensions->Units = SimpleType\LinearUnits::_IN;
-            $rateRequest->RequestedShipment->RequestedPackageLineItems[1]->GroupPackageCount = 1;
+            // Loop through boxing details and create packages
+            foreach ($boxingDetails as $item) {
+                $packageLineItem = new ComplexType\RequestedPackageLineItem();
+                $packageLineItem->Weight->Value = $item["boxWeight"];
+                $packageLineItem->Weight->Units = SimpleType\WeightUnits::_LB;
+                $packageLineItem->Dimensions->Length = $item["length"];
+                $packageLineItem->Dimensions->Width = $item["width"];
+                $packageLineItem->Dimensions->Height = $item["height"];
+                $packageLineItem->Dimensions->Units = SimpleType\LinearUnits::_IN;
+                $packageLineItem->GroupPackageCount = 1;  // Ensure GroupPackageCount is set to 1
+    
+                $requestedPackageLineItems[] = $packageLineItem;
+            }
+        } else {
+            // Default packages if no boxing details
+            /*$package1 = new ComplexType\RequestedPackageLineItem();
+            $package1->Weight->Value = 2;
+            $package1->Weight->Units = SimpleType\WeightUnits::_LB;
+            $package1->Dimensions->Length = 10;
+            $package1->Dimensions->Width = 10;
+            $package1->Dimensions->Height = 3;
+            $package1->Dimensions->Units = SimpleType\LinearUnits::_IN;
+            $package1->GroupPackageCount = 1;
+    
+            $package2 = new ComplexType\RequestedPackageLineItem();
+            $package2->Weight->Value = 5;
+            $package2->Weight->Units = SimpleType\WeightUnits::_LB;
+            $package2->Dimensions->Length = 20;
+            $package2->Dimensions->Width = 20;
+            $package2->Dimensions->Height = 10;
+            $package2->Dimensions->Units = SimpleType\LinearUnits::_IN;
+            $package2->GroupPackageCount = 1;
+    
+            $requestedPackageLineItems[] = $package1;
+            $requestedPackageLineItems[] = $package2;*/
         }
-
-        
-        
-        //var_dump($rateRequest->RequestedShipment->RequestedPackageLineItems[0]);
+    
+        // Set package count and line items
+        $rateRequest->RequestedShipment->PackageCount = count($requestedPackageLineItems);
+        $rateRequest->RequestedShipment->RequestedPackageLineItems = $requestedPackageLineItems;
+    
+        // Send rate request
         $rateServiceRequest = new Request();
-        $rateServiceRequest->getSoapClient()->__setLocation(Request::PRODUCTION_URL); //use production URL
+        $rateServiceRequest->getSoapClient()->__setLocation(Request::PRODUCTION_URL); // Use production URL
+        $rateReply = $rateServiceRequest->getGetRatesReply($rateRequest);
         
-        $rateReply = $rateServiceRequest->getGetRatesReply($rateRequest); // send true as the 2nd argument to return the SoapClient's stdClass response.
-        
-        /*
-        if (!empty($rateReply->RateReplyDetails)) {
-            foreach ($rateReply->RateReplyDetails as $rateReplyDetail) {
-                var_dump($rateReplyDetail->ServiceType);
-                if (!empty($rateReplyDetail->RatedShipmentDetails)) {
-                    foreach ($rateReplyDetail->RatedShipmentDetails as $ratedShipmentDetail) {
-                        var_dump($ratedShipmentDetail->ShipmentRateDetail->RateType . ": " . $ratedShipmentDetail->ShipmentRateDetail->TotalNetCharge->Amount);
-                    }
+        // Check for any notifications or warnings in the response
+        /*if (isset($rateReply->Notifications)) {
+            foreach ($rateReply->Notifications as $notification) {
+                if ($notification->Severity === 'WARNING') {
+                    // Log or display the warning message
+                     PrestaShopLogger::addLog('FedEx Warning: ' . $notification->Message, 2);
                 }
-                echo "<hr />";
             }
         }*/
-        
-        //var_dump($rateReply->RateReplyDetails[0]->RatedShipmentDetails);
-        $rate = $rateReply->RateReplyDetails[0]->RatedShipmentDetails[0]->ShipmentRateDetail->TotalNetCharge->Amount;
-        return $rate;
+
+    
+        //echo '<pre>';
+        //var_dump($rateReply);
+        //echo '</pre>';
+    
+        // Get rate amount
+        if (!empty($rateReply->RateReplyDetails)) {
+            $rate = $rateReply->RateReplyDetails[0]->RatedShipmentDetails[0]->ShipmentRateDetail->TotalNetCharge->Amount;
+            return $rate;
+        }
+    
+        return null;
     }
+
     
     
     
