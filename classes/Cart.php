@@ -501,7 +501,7 @@ class Cart extends CartCore
                     'SKU' => $product['reference']
                 ];
             }
-                                
+            //$boxingDetails = null;                    
             $boxingDetails = $this->getBoxingDetails($items);
             $this->cached_shipping_cost = $this->getFedExShippingCost($boxingDetails);
             
@@ -922,7 +922,7 @@ class Cart extends CartCore
             }
         } else {
             // Default packages if no boxing details
-            /*$package1 = new ComplexType\RequestedPackageLineItem();
+            $package1 = new ComplexType\RequestedPackageLineItem();
             $package1->Weight->Value = 2;
             $package1->Weight->Units = SimpleType\WeightUnits::_LB;
             $package1->Dimensions->Length = 10;
@@ -941,7 +941,7 @@ class Cart extends CartCore
             $package2->GroupPackageCount = 1;
     
             $requestedPackageLineItems[] = $package1;
-            $requestedPackageLineItems[] = $package2;*/
+            $requestedPackageLineItems[] = $package2;
         }
     
         // Set package count and line items
