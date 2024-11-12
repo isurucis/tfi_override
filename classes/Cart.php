@@ -497,7 +497,7 @@ class Cart extends CartCore
         }
 
 
-        if ($context->controller instanceof OrderController || $context->controller instanceof OrderOpcController) {
+        
 
             if ($id_carrier === 8) {//FedEx Standard Overnight
                 
@@ -513,9 +513,14 @@ class Cart extends CartCore
                         'SKU' => $product['reference']
                     ];
                 }
+                $objectDump = var_export($this->getProducts(), true);
+                Logger::addLog('Product detail Object Dump: ' . $objectDump, 1, null, 'Order', $this->id, true);
+        
                 //$boxingDetails = null;                    
                 $boxingDetails = $this->getBoxingDetails($items);
                 $this->cached_shipping_cost = $this->getFedExShippingCost($boxingDetails);
+                
+                
                 
                 return $this->cached_shipping_cost;
             } else {
@@ -774,7 +779,7 @@ class Cart extends CartCore
                 
                 return $shipping_cost;
             }
-        }
+        
         // Otherwise, return 0 for shipping cost outside of checkout
         return 0;
     }
@@ -880,6 +885,47 @@ class Cart extends CartCore
         return $boxingDetails;
     }
     
+    
+    private function calculateCirclesInRectangle($rectangleWidth, $rectangleHeight, $circleDiameters)
+    {
+        // Sort circles by diameter in descending order (largest first for better packing efficiency)
+        rsort($circleDiameters);
+
+        // Total number of circles that can fit
+        $totalCircles = 0;
+
+        // Remaining space for placement in both dimensions
+        $remainingWidth = $rectangleWidth;
+        $remainingHeight = $rectangleHeight;
+
+        foreach ($circleDiameters as $diameter) {
+            // Calculate the space required for this circle in width and height
+            $circleWidth = $diameter;
+            $circleHeight = $diameter;
+
+            // Check if the circle can fit in the remaining width and height
+            if ($circleWidth <= $remainingWidth && $circleHeight <= $remainingHeight) {
+                // Circle fits horizontally in the current row
+                $totalCircles++;
+                $remainingWidth -= $circleWidth;
+
+                // If we can't fit any more circles horizontally, move to the next row
+                if ($remainingWidth < min($circleDiameters)) {
+                    $remainingWidth = $rectangleWidth;
+                    $remainingHeight -= $circleHeight;
+                }
+
+                // If no more vertical space, break out of the loop
+                if ($remainingHeight < min($circleDiameters)) {
+                    break;
+                }
+            }
+        }
+
+        return $totalCircles;
+    }
+
+
     private function getFedExShippingCost($boxingDetails = null)
     {
         $rateRequest = new RateRequest();
@@ -957,8 +1003,8 @@ class Cart extends CartCore
     
         // Shipping type & charges payment type
         $rateRequest->RequestedShipment->ShippingChargesPayment->PaymentType = SimpleType\PaymentType::_SENDER;
-        $rateRequest->RequestedShipment->ServiceType = SimpleType\ServiceType::_PRIORITY_OVERNIGHT;
-        //$rateRequest->RequestedShipment->ServiceType = SimpleType\ServiceType::_STANDARD_OVERNIGHT;
+        //$rateRequest->RequestedShipment->ServiceType = SimpleType\ServiceType::_PRIORITY_OVERNIGHT;
+        $rateRequest->RequestedShipment->ServiceType = SimpleType\ServiceType::_STANDARD_OVERNIGHT;
     
         // Rate request types
         $rateRequest->RequestedShipment->RateRequestTypes = [SimpleType\RateRequestType::_PREFERRED, SimpleType\RateRequestType::_LIST];
